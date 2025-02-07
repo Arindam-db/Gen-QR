@@ -6,11 +6,11 @@
     <color name="colorPrimary">#02448F</color>
     <color name="colorPrimaryDark">#033368</color>
     <color name="colorAccent">#00B8FA</color>
-    <color name="colorBackground">#C8F6FD</color>
+    <color name="colorBackground">#E5F9FF</color>
 
 
-    <color name="button_normal_color">#00B8FA</color>
-    <color name="button_pressed_color">#02448F</color>
+    <color name="button_normal_color">@color/colorAccent</color>
+    <color name="button_pressed_color">@color/colorPrimary</color>
     <color name="button_text_color">#FFFFFF</color>
 
 </resources>

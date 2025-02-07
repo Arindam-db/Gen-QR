@@ -1,21 +1,23 @@
 [versions]
-agp = "8.7.2"
-appcompatVersion = "1.6.1"
+agp = "8.7.3"
+appcompatVersion = "1.7.0"
 barcodeScanning = "17.3.0"
 cameraView = "1.4.1"
 cardview = "1.0.0"
 core = "3.4.1"
 coreSplashscreen = "1.0.1"
+gson = "2.10.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-activity = "1.9.2"
-constraintlayout = "2.1.4"
+activity = "1.10.0"
+constraintlayout = "2.2.0"
 kotlin = "2.1.10"
 coreKtx = "1.15.0"
-materialVersion = "1.11.0"
+materialVersion = "1.12.0"
+roomKtx = "2.6.1"
 zxingAndroidEmbedded = "4.3.0"
 
 [libraries]
@@ -28,6 +30,7 @@ camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraVie
 cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -37,9 +40,10 @@ activity = { group = "androidx.activity", name = "activity", version.ref = "acti
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 material-v1110 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomKtx" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-

@@ -1,19 +1,20 @@
 package com.example.qrscanner
 
-import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.launch
 
 class HistoryFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var historyAdapter: HistoryAdapter
-    private lateinit var clipboardManager: ClipboardManager
+    private lateinit var database: ScannedQRDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -22,26 +23,27 @@ class HistoryFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_history, container, false)
         recyclerView = view.findViewById(R.id.recycler_view_history)
+        val buttonClearHistory: ImageView = view.findViewById(R.id.button_clear_history)
 
-        // Load data from SharedPreferences
-        val historyList = loadScannedHistory()
+        // Initialize Database
+        database = ScannedQRDatabase.getDatabase(requireContext())
 
-        // Get ClipboardManager
-        clipboardManager =
-            requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        // Observe Live Data from Room
+        lifecycleScope.launch {
+            database.scannedQRDao().getAllScannedQR().collect { historyList ->
+                historyAdapter = HistoryAdapter(historyList)
+                recyclerView.layoutManager = LinearLayoutManager(requireContext())
+                recyclerView.adapter = historyAdapter
+            }
+        }
 
-        // Set up RecyclerView
-        historyAdapter = HistoryAdapter(historyList, clipboardManager, requireContext())
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = historyAdapter
+        // Clear History Button Action
+        buttonClearHistory.setOnClickListener {
+            lifecycleScope.launch {
+                database.scannedQRDao().clearHistory()
+            }
+        }
 
         return view
-    }
-
-    // Function to retrieve QR code history from SharedPreferences
-    private fun loadScannedHistory(): List<String> {
-        val sharedPreferences =
-            requireActivity().getSharedPreferences("QR_HISTORY", Context.MODE_PRIVATE)
-        return sharedPreferences.getStringSet("history_list", setOf())?.toList() ?: emptyList()
     }
 }

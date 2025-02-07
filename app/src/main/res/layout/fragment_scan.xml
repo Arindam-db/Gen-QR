@@ -5,30 +5,55 @@
     android:orientation="vertical"
     android:gravity="center">
 
-    <!-- Gallery Icon -->
-    <ImageView
-        android:id="@+id/gallery_icon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_margin="8dp"
-        android:src="@drawable/ic_gallery"
-        android:clickable="true"
-        android:focusable="true"/>
 
     <!-- QR Scanner Box -->
-    <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="7sp"
-        android:background="@drawable/qr_scan_box_with_stroke">
-        <!-- QR Scanner Box -->
-        <com.journeyapps.barcodescanner.DecoratedBarcodeView
-            android:id="@+id/barcode_scanner"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
-            app:zxing_framing_rect_width="200dp"
-            app:zxing_framing_rect_height="200dp" />
-    </FrameLayout>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="64sp"
+        android:layout_gravity="center"
+        android:layout_margin="44sp">
+
+
+        <!-- Gallery Icon -->
+
+        <ImageView
+            android:id="@+id/gallery_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_margin="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_gallery"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textView2"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap here to scan from gallery"
+            android:textSize="16dp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.594"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/barcode_scanner"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_margin="22dp"
+        android:padding="6dp"
+        app:zxing_framing_rect_width="200dp"
+        app:zxing_framing_rect_height="200dp" />
 
     <!-- Scan Result Display -->
     <TextView

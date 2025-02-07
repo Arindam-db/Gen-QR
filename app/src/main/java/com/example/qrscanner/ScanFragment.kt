@@ -23,15 +23,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import com.google.zxing.BinaryBitmap
-import com.google.zxing.LuminanceSource
-import com.google.zxing.MultiFormatReader
-import com.google.zxing.RGBLuminanceSource
-import com.google.zxing.ResultPoint
+import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 class ScanFragment : Fragment() {
@@ -42,6 +41,7 @@ class ScanFragment : Fragment() {
     private lateinit var buttonFlash: Button
     private lateinit var galleryIcon: ImageView
     private var isFlashOn = false
+    private lateinit var database: ScannedQRDatabase
     private lateinit var vibrator: Vibrator
 
     // Launcher to pick image from gallery
@@ -53,7 +53,8 @@ class ScanFragment : Fragment() {
         try {
             val bitmap = loadBitmapFromUri(uri)
             scanBarcodeFromBitmap(bitmap)
-        } catch (_: IOException) {
+        } catch (e: Exception) {
+            e.printStackTrace()
             showToast(R.string.failed_to_load_image)
         }
     }
@@ -61,12 +62,17 @@ class ScanFragment : Fragment() {
     @SuppressLint("ObsoleteSdkInt")
     private fun loadBitmapFromUri(uri: Uri): Bitmap {
         val contentResolver = requireContext().contentResolver
-        return if (Build.VERSION.SDK_INT < 28) {
-            @Suppress("DEPRECATION")
-            MediaStore.Images.Media.getBitmap(contentResolver, uri)
-        } else {
-            val source = ImageDecoder.createSource(contentResolver, uri)
-            ImageDecoder.decodeBitmap(source)
+        return try {
+            if (Build.VERSION.SDK_INT < 28) {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(contentResolver, uri)
+            } else {
+                val source = ImageDecoder.createSource(contentResolver, uri)
+                ImageDecoder.decodeBitmap(source).copy(Bitmap.Config.ARGB_8888, true) // Ensures bitmap is mutable
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw IOException("Failed to load bitmap from URI")
         }
     }
 
@@ -75,15 +81,9 @@ class ScanFragment : Fragment() {
     }
 
     private fun vibrateOnClick() {
-        // Check if the device has a vibrator
         if (vibrator.hasVibrator()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        50,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
                 vibrator.vibrate(100) // Increase duration to 100ms
@@ -104,20 +104,18 @@ class ScanFragment : Fragment() {
         buttonCopy = view.findViewById(R.id.button_copy)
         buttonFlash = view.findViewById(R.id.button_flash)
         galleryIcon = view.findViewById(R.id.gallery_icon)
+        database = ScannedQRDatabase.getDatabase(requireContext())
 
-        // Start continuous scanning
         barcodeView.decodeContinuous(callback)
 
-        // Get the Vibrator service
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = requireContext().getSystemService(VibratorManager::class.java) as VibratorManager
-        vibratorManager.defaultVibrator
-            } else {
+            val vibratorManager = requireContext().getSystemService(VibratorManager::class.java) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
             @Suppress("DEPRECATION")
             requireContext().getSystemService(Vibrator::class.java) as Vibrator
-                    }
+        }
 
-        // Flashlight toggle
         buttonFlash.setOnClickListener {
             isFlashOn = !isFlashOn
             if (isFlashOn) {
@@ -130,30 +128,24 @@ class ScanFragment : Fragment() {
             vibrateOnClick()
         }
 
-
-        // Open link action
         buttonOpenLink.setOnClickListener {
             vibrateOnClick()
             val url = textScanResult.text.toString()
             if (url.isNotEmpty()) {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                startActivity(browserIntent)
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             } else {
                 showToast(R.string.no_url_to_open)
             }
         }
 
-        // Copy action
         buttonCopy.setOnClickListener {
             vibrateOnClick()
-            val clipboard =
-                requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clipboard = requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText(getString(R.string.scanned_qr_code), textScanResult.text)
             clipboard.setPrimaryClip(clip)
             showToast(R.string.copied_to_clipboard)
         }
 
-        // Gallery icon click listener to pick an image
         galleryIcon.setOnClickListener {
             vibrateOnClick()
             pickImageLauncher.launch("image/*")
@@ -162,17 +154,12 @@ class ScanFragment : Fragment() {
         return view
     }
 
-
     private val callback: BarcodeCallback = object : BarcodeCallback {
         override fun barcodeResult(result: BarcodeResult) {
             if (result.text != null) {
-                barcodeView.pause() // Pause the scanner after reading the code
+                barcodeView.pause()
                 textScanResult.text = result.text
-
-                // Store scanned data in SharedPreferences
                 saveScannedData(result.text)
-
-                // Make the buttons visible
                 buttonOpenLink.visibility = View.VISIBLE
                 buttonCopy.visibility = View.VISIBLE
             }
@@ -181,18 +168,11 @@ class ScanFragment : Fragment() {
         override fun possibleResultPoints(resultPoints: MutableList<ResultPoint?>?) {}
     }
 
-    // Function to store scanned QR code data in SharedPreferences
     private fun saveScannedData(scannedText: String) {
-        val sharedPreferences = requireActivity().getSharedPreferences("QR_HISTORY", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-
-        // Retrieve existing data and append new entry
-        val existingData = sharedPreferences.getStringSet("history_list", mutableSetOf()) ?: mutableSetOf()
-        existingData.add(scannedText)
-
-        // Save updated history
-        editor.putStringSet("history_list", existingData)
-        editor.apply()
+        CoroutineScope(Dispatchers.IO).launch {
+            val scannedQR = ScannedQR(scannedText = scannedText)
+            database.scannedQRDao().insertScannedQR(scannedQR)
+        }
     }
 
     override fun onResume() {
@@ -207,26 +187,22 @@ class ScanFragment : Fragment() {
 
     private fun scanBarcodeFromBitmap(bitmap: Bitmap) {
         try {
-            val intArray = IntArray(bitmap.width * bitmap.height)
-            bitmap.getPixels(
-                intArray,
-                0,
-                bitmap.width,
-                0,
-                0,
-                bitmap.width,
-                bitmap.height
-            )
-            val source: LuminanceSource =
-                RGBLuminanceSource(bitmap.width, bitmap.height, intArray)
+            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 600, 600, true)
+
+            val intArray = IntArray(resizedBitmap.width * resizedBitmap.height)
+            resizedBitmap.getPixels(intArray, 0, resizedBitmap.width, 0, 0, resizedBitmap.width, resizedBitmap.height)
+
+            val source: LuminanceSource = RGBLuminanceSource(resizedBitmap.width, resizedBitmap.height, intArray)
             val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
             val result = MultiFormatReader().decode(binaryBitmap)
 
-            // Display result
             textScanResult.text = result.text
             buttonOpenLink.visibility = View.VISIBLE
             buttonCopy.visibility = View.VISIBLE
-        } catch (_: Exception) {
+
+            saveScannedData(result.text)
+        } catch (e: Exception) {
+            e.printStackTrace()
             showToast(R.string.no_qr_code_found)
         }
     }

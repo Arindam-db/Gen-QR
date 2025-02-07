@@ -1,11 +1,13 @@
 package com.example.qrscanner
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -26,6 +28,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        applySavedTheme()
+
         super.onCreate(savedInstanceState)
         Thread.sleep(600)
         installSplashScreen()
@@ -45,6 +50,12 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             checkAndRequestCameraPermission()
         }
+    }
+
+    private fun applySavedTheme() {
+        val sharedPreferences = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val savedThemeMode = sharedPreferences.getInt("ThemeMode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        AppCompatDelegate.setDefaultNightMode(savedThemeMode)
     }
 
     private fun checkAndRequestCameraPermission() {
