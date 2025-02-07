@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">GEN QR</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="failed_to_load_image">Failed to load image</string>
+    <string name="flash_off">Flash Off</string>
+    <string name="flash_on">Flash On</string>
+    <string name="no_url_to_open">No URL to open</string>
+    <string name="scanned_qr_code">Scanned QR Code</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="no_qr_code_found">No QR code found in the image</string>
+
+</resources>
